@@ -101,6 +101,7 @@ function defaultState() {
       memoEnabled: false,
       clickThrough: false,
       ctrlTemporaryPassthrough: true,
+      showDayPicker: false,
     },
     memo: { text: "", expanded: false },
     lastActiveDate: todayStr(),
@@ -461,15 +462,15 @@ function render() {
   rollOverIfNeeded();
   applyWindowChrome();
 
-  const day = compact ? "today" : state.selectedDay;
+  const day = compact || !state.settings.showDayPicker ? "today" : state.selectedDay;
   const showRecurring = day === "today" && state.recurringItems.length > 0;
-  const cnt = incompleteCount();
+  const cnt = incompleteCount(day);
 
   let html = "";
 
   if (!compact) {
     const sub =
-      cnt === 0 ? "这一页已经清空" : `${DAY_TITLE[state.selectedDay]}还有 ${cnt} 件事`;
+      cnt === 0 ? "这一页已经清空" : `${DAY_TITLE[day]}还有 ${cnt} 件事`;
     html += `<div class="header">
       <div class="titles"><p>${sub}</p></div>
       <div class="spacer"></div>
@@ -477,13 +478,15 @@ function render() {
       <button class="icon-btn" data-act="settings" title="设置">${ICONS.gear}</button>
     </div>`;
 
-    html += `<div class="day-picker">`;
-    DAYS.forEach((d, i) => {
-      html += `<div class="day-seg ${state.selectedDay === d ? "sel" : ""}" data-act="day" data-day="${d}">
+    if (state.settings.showDayPicker) {
+      html += `<div class="day-picker">`;
+      DAYS.forEach((d, i) => {
+        html += `<div class="day-seg ${state.selectedDay === d ? "sel" : ""}" data-act="day" data-day="${d}">
         <span class="t">${DAY_TITLE[d]}</span><span class="d">${dateLabel(i)}</span>
       </div>`;
-    });
-    html += `</div>`;
+      });
+      html += `</div>`;
+    }
   }
 
   if (showRecurring) {
@@ -781,6 +784,7 @@ function openSettings() {
     <h2>小组件设置</h2>
     <div class="set-row"><span>始终置顶</span><div class="switch ${s.alwaysOnTop ? "on" : ""}" data-s="alwaysOnTop"></div></div>
     ${isWindows ? `<div class="set-row"><span>固定在桌面（Win+D 后仍显示）</span><div class="switch ${s.showOnDesktop ? "on" : ""}" data-s="showOnDesktop"></div></div>` : ""}
+    <div class="set-row"><span>显示今天/明天/后天</span><div class="switch ${s.showDayPicker ? "on" : ""}" data-s="showDayPicker"></div></div>
     <div class="set-row"><span>鼠标穿透（点击落到下层）</span><div class="switch ${s.clickThrough ? "on" : ""}" data-s="clickThrough"></div></div>
     <div class="set-row"><span>按住 Ctrl 临时切换穿透</span><div class="switch ${s.ctrlTemporaryPassthrough ? "on" : ""}" data-s="ctrlTemporaryPassthrough"></div></div>
     <div class="set-row"><span>开机自启动</span><div class="switch" id="autostart-sw" data-s="autostart"></div></div>
@@ -811,7 +815,8 @@ function openSettings() {
       💡 全局快捷键 <b>${navigator.platform.includes("Mac") ? "⌘⇧Space" : "Ctrl+Shift+Space"}</b> 可在任意应用中唤起并聚焦输入框，快速记一笔。<br>
       ⏰ 输入「明天 15:00 开会」会自动识别日期与提醒时间。<br>
       🖱️ 开启鼠标穿透后浮窗不再挡点击，可从<b>托盘菜单「切换鼠标穿透」</b>关回来。<br>
-      ⌨️ 按住 <b>Ctrl</b> 可临时切换鼠标穿透，松开恢复；可在上面关闭这个快捷操作。
+      ⌨️ 按住 <b>Ctrl</b> 可临时切换鼠标穿透，松开恢复；可在上面关闭这个快捷操作。<br>
+      📅 关闭「显示今天/明天/后天」后只显示今天，明天/后天的待办仍会保留。
     </div>
     <div class="set-row" style="justify-content:flex-end"><button class="link-btn" data-s="close">完成</button></div>
   </div>`;
@@ -840,6 +845,14 @@ function openSettings() {
         sw.classList.toggle("on");
       }
       else if (key === "resetBg") { state.settings.customBg = null; overlay.remove(); save(); render(); openSettings(); return; }
+      else if (key === "showDayPicker") {
+        state.settings.showDayPicker = !state.settings.showDayPicker;
+        if (!state.settings.showDayPicker) state.selectedDay = "today";
+        sw.classList.toggle("on", state.settings.showDayPicker);
+        save();
+        render();
+        return;
+      }
       else if (key === "clickThrough") {
         state.settings.clickThrough = !state.settings.clickThrough;
         sw.classList.toggle("on");

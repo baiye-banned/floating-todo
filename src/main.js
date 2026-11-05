@@ -100,6 +100,7 @@ function defaultState() {
       customBg: null,
       memoEnabled: false,
       clickThrough: false,
+      ctrlTemporaryPassthrough: true,
     },
     memo: { text: "", expanded: false },
     lastActiveDate: todayStr(),
@@ -343,6 +344,26 @@ let activeMenu = null; // { id, day, kind }
 let appliedWindowMode = null;
 let pendingWindowMode = null;
 let windowModeTask = Promise.resolve();
+let ctrlTemporaryActive = false;
+
+function applyClickThrough() {
+  if (!appWindow) return;
+  const baseline = !!state.settings.clickThrough;
+  const ignore = ctrlTemporaryActive ? !baseline : baseline;
+  appWindow.setIgnoreCursorEvents(ignore).catch(() => {});
+}
+
+function setCtrlTemporary(active) {
+  const next = !!active && !!state.settings.ctrlTemporaryPassthrough;
+  if (ctrlTemporaryActive === next) return;
+  ctrlTemporaryActive = next;
+  document.documentElement.classList.toggle("ctrl-temporary-passthrough", next);
+  applyClickThrough();
+}
+
+function resetCtrlTemporary() {
+  setCtrlTemporary(false);
+}
 
 function applyWindowMode() {
   if (!appWindow) return;
@@ -395,7 +416,7 @@ function applyWindowChrome() {
     root.style.removeProperty("--panel-bottom");
   }
   if (appWindow) {
-    appWindow.setIgnoreCursorEvents(!!state.settings.clickThrough).catch(() => {});
+    applyClickThrough();
   }
   applyWindowMode();
 }
@@ -761,6 +782,7 @@ function openSettings() {
     <div class="set-row"><span>始终置顶</span><div class="switch ${s.alwaysOnTop ? "on" : ""}" data-s="alwaysOnTop"></div></div>
     ${isWindows ? `<div class="set-row"><span>固定在桌面（Win+D 后仍显示）</span><div class="switch ${s.showOnDesktop ? "on" : ""}" data-s="showOnDesktop"></div></div>` : ""}
     <div class="set-row"><span>鼠标穿透（点击落到下层）</span><div class="switch ${s.clickThrough ? "on" : ""}" data-s="clickThrough"></div></div>
+    <div class="set-row"><span>按住 Ctrl 临时切换穿透</span><div class="switch ${s.ctrlTemporaryPassthrough ? "on" : ""}" data-s="ctrlTemporaryPassthrough"></div></div>
     <div class="set-row"><span>开机自启动</span><div class="switch" id="autostart-sw" data-s="autostart"></div></div>
     <div class="set-row"><span>开启备忘录</span><div class="switch ${s.memoEnabled ? "on" : ""}" data-s="memoEnabled"></div></div>
     <div>
@@ -788,7 +810,8 @@ function openSettings() {
     <div style="font-size:11px;color:var(--text-secondary);line-height:1.6">
       💡 全局快捷键 <b>${navigator.platform.includes("Mac") ? "⌘⇧Space" : "Ctrl+Shift+Space"}</b> 可在任意应用中唤起并聚焦输入框，快速记一笔。<br>
       ⏰ 输入「明天 15:00 开会」会自动识别日期与提醒时间。<br>
-      🖱️ 开启鼠标穿透后浮窗不再挡点击，可从<b>托盘菜单「切换鼠标穿透」</b>关回来。
+      🖱️ 开启鼠标穿透后浮窗不再挡点击，可从<b>托盘菜单「切换鼠标穿透」</b>关回来。<br>
+      ⌨️ 按住 <b>Ctrl</b> 可临时切换鼠标穿透，松开恢复；可在上面关闭这个快捷操作。
     </div>
     <div class="set-row" style="justify-content:flex-end"><button class="link-btn" data-s="close">完成</button></div>
   </div>`;
@@ -823,6 +846,14 @@ function openSettings() {
         save();
         // 开启后浮窗不再响应点击，先关闭设置面板避免被困
         if (state.settings.clickThrough) overlay.remove();
+        applyWindowChrome();
+        return;
+      }
+      else if (key === "ctrlTemporaryPassthrough") {
+        state.settings.ctrlTemporaryPassthrough = !state.settings.ctrlTemporaryPassthrough;
+        sw.classList.toggle("on", state.settings.ctrlTemporaryPassthrough);
+        if (!state.settings.ctrlTemporaryPassthrough) resetCtrlTemporary();
+        save();
         applyWindowChrome();
         return;
       }
@@ -1009,6 +1040,29 @@ TAURI?.event?.listen?.("toggle-passthrough", () => {
   save();
   applyWindowChrome();
 });
+
+// Windows 后端全局监听 Ctrl：按住时临时反转当前穿透状态，松开恢复。
+TAURI?.event?.listen?.("ctrl-state", (event) => {
+  setCtrlTemporary(!!event.payload);
+});
+
+// macOS / Linux 没有全局键盘监听，窗口聚焦时用 DOM 键盘事件兜底。
+if (!isWindows) {
+  const onCtrlDown = (e) => {
+    if (e.key !== "Control" || e.repeat) return;
+    setCtrlTemporary(true);
+  };
+  const onCtrlUp = (e) => {
+    if (e.key !== "Control") return;
+    setCtrlTemporary(false);
+  };
+  window.addEventListener("keydown", onCtrlDown, true);
+  window.addEventListener("keyup", onCtrlUp, true);
+  window.addEventListener("blur", resetCtrlTemporary);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) resetCtrlTemporary();
+  });
+}
 
 TAURI?.event?.listen?.("toggle-desktop-mode", () => {
   if (!isWindows) return;

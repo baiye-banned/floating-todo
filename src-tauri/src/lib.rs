@@ -20,6 +20,26 @@ fn toggle_window(app: &AppHandle) {
     }
 }
 
+/// Windows：全局监听 Ctrl 按下/松开，让浮窗在按住 Ctrl 时临时切换鼠标穿透。
+/// 使用轮询而不是注册热键，避免占用 Ctrl 组合键（Ctrl+C / Ctrl+V 等照常使用）。
+#[cfg(target_os = "windows")]
+fn spawn_ctrl_watcher(app: AppHandle) {
+    use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL};
+
+    std::thread::spawn(move || {
+        let mut was_down = false;
+        loop {
+            // 最高位为 1 表示当前按住；同时覆盖左右 Ctrl。
+            let is_down = unsafe { GetAsyncKeyState(VK_CONTROL.0 as i32) } < 0;
+            if is_down != was_down {
+                was_down = is_down;
+                let _ = app.emit("ctrl-state", is_down);
+            }
+            std::thread::sleep(std::time::Duration::from_millis(30));
+        }
+    });
+}
+
 /// 导出数据到用户选择的文件。
 #[tauri::command]
 async fn export_data(app: AppHandle, json: String) -> Result<bool, String> {
@@ -108,6 +128,10 @@ pub fn run() {
                 let _ = win.show();
                 let _ = win.set_focus();
             }
+
+            // Windows：全局监听 Ctrl；前端根据当前穿透状态做临时反转。
+            #[cfg(target_os = "windows")]
+            spawn_ctrl_watcher(app.handle().clone());
 
             // 全局快捷键：CmdOrCtrl+Shift+Space 唤起并聚焦输入框（快速捕获）。
             #[cfg(desktop)]

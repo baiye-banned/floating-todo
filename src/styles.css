@@ -88,7 +88,6 @@ body {
   -webkit-backdrop-filter: blur(26px) saturate(1.4);
   backdrop-filter: blur(26px) saturate(1.4);
   border: 1px solid rgba(var(--border), var(--border-alpha));
-  box-shadow: 0 18px 48px var(--shadow);
   overflow: hidden;
   display: flex;
   flex-direction: column;

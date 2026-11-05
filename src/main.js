@@ -471,7 +471,7 @@ function render() {
     const sub =
       cnt === 0 ? "这一页已经清空" : `${DAY_TITLE[state.selectedDay]}还有 ${cnt} 件事`;
     html += `<div class="header">
-      <div class="titles"><h1>悬浮待办</h1><p>${sub}</p></div>
+      <div class="titles"><p>${sub}</p></div>
       <div class="spacer"></div>
       <div class="count-pill ${cnt === 0 ? "zero" : ""}">${cnt}</div>
       <button class="icon-btn" data-act="settings" title="设置">${ICONS.gear}</button>
@@ -520,7 +520,7 @@ function render() {
     // 输入框
     const editing = composerEditId;
     html += `<div class="composer">
-      <span class="ic">${editing ? ICONS.pencil : ICONS.plus}</span>
+      ${editing ? `<span class="ic">${ICONS.pencil}</span>` : ""}
       <input id="main-input" placeholder="${editing ? "编辑待办标题" : "添加" + DAY_TITLE[state.selectedDay] + "待办"}" value="${esc(draft)}"/>
       ${editing ? `<button class="icon-btn sm" data-act="canceledit">${ICONS.x}</button>` : ""}
       <button class="send ${draft.trim() ? "" : "off"}" data-act="submit">${editing ? ICONS.arrowUp : ICONS.arrowUp}</button>

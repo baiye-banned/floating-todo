@@ -112,16 +112,6 @@ body {
   align-items: center;
   gap: 10px;
 }
-.header .titles h1 {
-  font-size: 17px;
-  font-weight: 700;
-}
-.header .titles p {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
 .header .spacer {
   flex: 1;
 }

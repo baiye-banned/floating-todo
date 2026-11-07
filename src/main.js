@@ -469,11 +469,7 @@ function render() {
   let html = "";
 
   if (!compact) {
-    html += `<div class="header">
-      <div class="spacer"></div>
-      <div class="count-pill ${cnt === 0 ? "zero" : ""}">${cnt}</div>
-      <button class="icon-btn" data-act="settings" title="设置">${ICONS.gear}</button>
-    </div>`;
+    html += `<div class="drag-strip" aria-hidden="true"></div>`;
 
     if (state.settings.showDayPicker) {
       html += `<div class="day-picker">`;
@@ -514,9 +510,14 @@ function render() {
   }
 
   if (!compact) {
-    if (completedCount(day) > 0) {
-      html += `<div class="clear-bar"><button data-act="clear" data-day="${day}" aria-label="清除已完成">${ICONS.trash}</button></div>`;
-    }
+    const completed = completedCount(day);
+    html += `<div class="bottom-bar">
+      <div class="bottom-left">
+        <div class="count-pill ${cnt === 0 ? "zero" : ""}">${cnt}</div>
+        <button class="icon-btn sm bottom-settings" data-act="settings" title="设置">${ICONS.gear}</button>
+      </div>
+      ${completed > 0 ? `<button class="clear-btn" data-act="clear" data-day="${day}" aria-label="清除已完成">${ICONS.trash}</button>` : ""}
+    </div>`;
     // 输入框
     const editing = composerEditId;
     html += `<div class="composer">
@@ -545,9 +546,9 @@ function render() {
 
   app.innerHTML = html;
 
-  // 头部可拖动
-  const header = app.querySelector(".header");
-  if (header) header.addEventListener("mousedown", onDragStart);
+  // 顶部可拖动区域
+  const dragHandle = app.querySelector(".drag-strip, .header");
+  if (dragHandle) dragHandle.addEventListener("mousedown", onDragStart);
 
   // 保持输入焦点
   if (focusMain) {

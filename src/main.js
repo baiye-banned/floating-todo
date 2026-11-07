@@ -469,10 +469,7 @@ function render() {
   let html = "";
 
   if (!compact) {
-    const sub =
-      cnt === 0 ? "这一页已经清空" : `${DAY_TITLE[day]}还有 ${cnt} 件事`;
     html += `<div class="header">
-      <div class="titles"><p>${sub}</p></div>
       <div class="spacer"></div>
       <div class="count-pill ${cnt === 0 ? "zero" : ""}">${cnt}</div>
       <button class="icon-btn" data-act="settings" title="设置">${ICONS.gear}</button>
@@ -518,13 +515,13 @@ function render() {
 
   if (!compact) {
     if (completedCount(day) > 0) {
-      html += `<div class="clear-bar"><button data-act="clear" data-day="${day}">${ICONS.trash}<span>清除已完成（${completedCount(day)}）</span></button></div>`;
+      html += `<div class="clear-bar"><button data-act="clear" data-day="${day}" aria-label="清除已完成">${ICONS.trash}</button></div>`;
     }
     // 输入框
     const editing = composerEditId;
     html += `<div class="composer">
       ${editing ? `<span class="ic">${ICONS.pencil}</span>` : ""}
-      <input id="main-input" placeholder="${editing ? "编辑待办标题" : "添加" + DAY_TITLE[state.selectedDay] + "待办"}" value="${esc(draft)}"/>
+      <input id="main-input" placeholder="${editing ? "编辑待办标题" : ""}" value="${esc(draft)}"/>
       ${editing ? `<button class="icon-btn sm" data-act="canceledit">${ICONS.x}</button>` : ""}
       <button class="send ${draft.trim() ? "" : "off"}" data-act="submit">${editing ? ICONS.arrowUp : ICONS.arrowUp}</button>
     </div>`;

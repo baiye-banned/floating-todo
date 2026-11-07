@@ -115,7 +115,7 @@ pub fn set_desktop_mode(hwnd: HWND, enabled: bool) -> Result<(), String> {
         };
         let mut desktop_position = screen_position;
         if !unsafe { ScreenToClient(host, &mut desktop_position) }.as_bool() {
-            return Err(windows::core::Error::from_win32().to_string());
+            return Err(windows::core::Error::from_thread().to_string());
         }
 
         let current_style = unsafe { GetWindowLongPtrW(hwnd, GWL_STYLE) };

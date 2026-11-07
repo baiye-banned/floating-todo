@@ -4,6 +4,8 @@ use tauri::{
     AppHandle, Emitter, Manager,
 };
 use tauri_plugin_dialog::DialogExt;
+#[cfg(desktop)]
+use tauri_plugin_window_state::{AppHandleExt, StateFlags};
 
 #[cfg(target_os = "windows")]
 mod windows_desktop;
@@ -106,6 +108,11 @@ pub fn run() {
     #[cfg(desktop)]
     {
         builder = builder
+            .plugin(
+                tauri_plugin_window_state::Builder::default()
+                    .with_state_flags(StateFlags::POSITION | StateFlags::SIZE)
+                    .build(),
+            )
             .plugin(tauri_plugin_global_shortcut::Builder::new().build())
             .plugin(tauri_plugin_autostart::init(
                 tauri_plugin_autostart::MacosLauncher::LaunchAgent,
@@ -187,7 +194,10 @@ pub fn run() {
                             let _ = win.emit("toggle-desktop-mode", ());
                         }
                     }
-                    "quit" => app.exit(0),
+                    "quit" => {
+                        let _ = app.save_window_state(StateFlags::POSITION | StateFlags::SIZE);
+                        app.exit(0);
+                    }
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {

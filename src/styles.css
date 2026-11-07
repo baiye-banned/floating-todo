@@ -78,7 +78,7 @@ body {
 
 .panel {
   position: absolute;
-  inset: 6px;
+  inset: 2px;
   border-radius: 26px;
   background: linear-gradient(
     145deg,
@@ -87,7 +87,7 @@ body {
   );
   -webkit-backdrop-filter: blur(26px) saturate(1.4);
   backdrop-filter: blur(26px) saturate(1.4);
-  border: 1px solid rgba(var(--border), var(--border-alpha));
+  border: 0.5px solid rgba(var(--border), var(--border-alpha));
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -98,18 +98,18 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: 14px;
-  gap: 12px;
+  padding: 8px 12px 10px;
+  gap: 8px;
 }
 .compact #app {
-  padding: 10px;
-  gap: 8px;
+  padding: 8px;
+  gap: 6px;
 }
 
 /* ---------- 拖动区域 ---------- */
 .drag-strip {
-  flex: 0 0 10px;
-  height: 10px;
+  flex: 0 0 4px;
+  height: 4px;
   cursor: grab;
 }
 .count-pill {
@@ -223,7 +223,7 @@ button {
   padding: 9px 10px;
   border-radius: 16px;
   background: rgba(var(--row-bg), var(--row-bg-alpha));
-  border: 1px solid rgba(var(--border), calc(var(--border-alpha) * 0.5));
+  border: 0.5px solid rgba(var(--border), calc(var(--border-alpha) * 0.5));
   transition: background 0.15s ease;
 }
 .compact .row {
